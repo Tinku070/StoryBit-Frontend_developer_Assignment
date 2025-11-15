@@ -1,58 +1,44 @@
-// app/movie/[id]/page.tsx
-import { fetchMovieById } from '../../../lib/tmdb';
-import Image from 'next/image';
-import type { Movie } from '../../../types/movie';
+// lib/tmdb.ts
+const BASE = 'https://api.themoviedb.org/3';
+const API_KEY = process.env.TMDB_API_KEY;
 
-interface Props {
-  params: Promise<{ id: string }>;   // 👈 FIX: params is a Promise
+async function safeFetch(url: string) {
+  const res = await fetch(url);
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`TMDB fetch failed (${res.status}): ${text}`);
+  }
+  return res.json();
 }
 
-export default async function MoviePage({ params }: Props) {
-  const { id } = await params;       // 👈 FIX: We must await it
+// MOVIES
+export async function fetchPopular() {
+  const url = `${BASE}/movie/popular?api_key=${API_KEY}&language=en-US&page=1`;
+  return safeFetch(url);
+}
 
-  let data: Movie | null = null;
+export async function fetchTopRated() {
+  const url = `${BASE}/movie/top_rated?api_key=${API_KEY}&language=en-US&page=1`;
+  return safeFetch(url);
+}
 
-  try {
-    data = await fetchMovieById(id);
-  } catch (err) {
-    console.error('❌ TMDB Error:', err);
-  }
+export async function fetchNowPlaying() {
+  const url = `${BASE}/movie/now_playing?api_key=${API_KEY}&language=en-US&page=1`;
+  return safeFetch(url);
+}
 
-  if (!data || data.success === false) {
-    return (
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        <p className="text-gray-300">Movie not found or invalid ID.</p>
-      </div>
-    );
-  }
+export async function fetchMovieById(id: string) {
+  const url = `${BASE}/movie/${id}?api_key=${API_KEY}&language=en-US`;
+  return safeFetch(url);
+}
 
-  return (
-    <div className="max-w-5xl mx-auto px-4 py-8">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="relative w-full h-64 md:h-96">
-          {data.poster_path ? (
-            <Image
-              src={`https://image.tmdb.org/t/p/w500${data.poster_path}`}
-              alt={data.title ?? 'Poster'}
-              fill
-              style={{ objectFit: 'cover' }}
-              priority
-            />
-          ) : (
-            <div className="w-full h-full bg-gray-700" />
-          )}
-        </div>
+// TV SHOWS (NEW)
+export async function fetchTVPopular() {
+  const url = `${BASE}/tv/popular?api_key=${API_KEY}&language=en-US&page=1`;
+  return safeFetch(url);
+}
 
-        <div className="md:col-span-2">
-          <h1 className="text-3xl font-bold mb-2">{data.title}</h1>
-          <p className="text-sm text-gray-300 mb-4">{data.release_date}</p>
-          <p className="text-gray-200 leading-relaxed mb-4">{data.overview}</p>
-
-          <div className="text-sm text-gray-300">
-            <strong>Rating:</strong> {data.vote_average ?? 'N/A'} / 10
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+export async function fetchTVTopRated() {
+  const url = `${BASE}/tv/top_rated?api_key=${API_KEY}&language=en-US&page=1`;
+  return safeFetch(url);
 }
