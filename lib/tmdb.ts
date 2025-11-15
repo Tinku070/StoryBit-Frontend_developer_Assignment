@@ -1,43 +1,57 @@
 // lib/tmdb.ts
-
-const BASE = "https://api.themoviedb.org/3";
+const BASE = 'https://api.themoviedb.org/3';
 const API_KEY = process.env.TMDB_API_KEY;
 
-if (!API_KEY) {
-  console.error("❌ TMDB_API_KEY missing in environment variables");
-}
-
+// Safe fetch wrapper
 async function safeFetch(url: string) {
-  try {
-    const res = await fetch(url, {
-      cache: "no-store",
-      next: { revalidate: 0 },
-    });
-
-    if (!res.ok) {
-      console.error("❌ TMDB Error:", res.status, await res.text());
-      return { results: [] };
-    }
-
-    return res.json();
-  } catch (error) {
-    console.error("❌ Fetch error:", error);
-    return { results: [] };
+  const res = await fetch(url);
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    console.error("TMDB Error:", res.status, text);
+    throw new Error(`TMDB fetch failed (${res.status}): ${text}`);
   }
+  return res.json();
 }
+
+/* -----------------------------
+   MOVIES ENDPOINTS
+----------------------------- */
 
 export async function fetchPopular() {
-  return safeFetch(`${BASE}/movie/popular?api_key=${API_KEY}&language=en-US`);
+  const url = `${BASE}/movie/popular?api_key=${API_KEY}&language=en-US&page=1`;
+  return safeFetch(url);
 }
 
 export async function fetchTopRated() {
-  return safeFetch(`${BASE}/movie/top_rated?api_key=${API_KEY}&language=en-US`);
+  const url = `${BASE}/movie/top_rated?api_key=${API_KEY}&language=en-US&page=1`;
+  return safeFetch(url);
 }
 
 export async function fetchNowPlaying() {
-  return safeFetch(`${BASE}/movie/now_playing?api_key=${API_KEY}&language=en-US`);
+  const url = `${BASE}/movie/now_playing?api_key=${API_KEY}&language=en-US&page=1`;
+  return safeFetch(url);
 }
 
 export async function fetchMovieById(id: string) {
-  return safeFetch(`${BASE}/movie/${id}?api_key=${API_KEY}&language=en-US`);
+  const url = `${BASE}/movie/${id}?api_key=${API_KEY}&language=en-US`;
+  return safeFetch(url);
+}
+
+/* -----------------------------
+   TV SHOWS ENDPOINTS
+----------------------------- */
+
+export async function fetchTVPopular() {
+  const url = `${BASE}/tv/popular?api_key=${API_KEY}&language=en-US&page=1`;
+  return safeFetch(url);
+}
+
+export async function fetchTVTopRated() {
+  const url = `${BASE}/tv/top_rated?api_key=${API_KEY}&language=en-US&page=1`;
+  return safeFetch(url);
+}
+
+export async function fetchTVShowById(id: string) {
+  const url = `${BASE}/tv/${id}?api_key=${API_KEY}&language=en-US`;
+  return safeFetch(url);
 }
